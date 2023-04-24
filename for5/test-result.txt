@@ -1,0 +1,108 @@
+Programmer 1 is starting writing his program
+Programmer 2 is starting writing his program
+Programmer 3 is starting writing his program
+Programmer 1 finished writing his program
+Programmer 3 finished writing his program
+Programmer 2 finished writing his program
+Programmer 1 is starting review program 2
+Programmer 2 is starting review program 1
+Programmer 2 finished review program 1, status: FAIL
+Programmer 1 finished review program 2, status: FAIL
+Programmer 1 is starting fixing his program after review
+Programmer 2 is starting fixing his program after review
+Programmer 2 finished fixing his program after review
+Programmer 1 finished fixing his program after review
+Programmer 2 is starting review program 1
+Programmer 1 is starting review program 2
+Programmer 1 finished review program 2, status: SUCCESS 
+Programmer 2 finished review program 1, status: SUCCESS 
+Programmer 1 is starting review program 3
+Programmer 2 is starting writing his program
+Programmer 1 finished review program 3, status: FAIL
+Programmer 1 is starting writing his program
+Programmer 3 is starting fixing his program after review
+Programmer 3 finished fixing his program after review
+Programmer 2 finished writing his program
+Programmer 3 is starting review program 2
+Programmer 1 finished writing his program
+Programmer 1 is starting review program 3
+Programmer 3 finished review program 2, status: FAIL
+Programmer 2 is starting review program 1
+Programmer 1 finished review program 3, status: SUCCESS 
+Programmer 2 finished review program 1, status: SUCCESS 
+Programmer 2 is starting fixing his program after review
+Programmer 1 is starting writing his program
+Programmer 3 is starting writing his program
+Programmer 2 finished fixing his program after review
+Programmer 3 finished writing his program
+Programmer 1 finished writing his program
+Programmer 3 is starting review program 2
+Programmer 1 is starting review program 3
+Programmer 2 is starting review program 1
+Programmer 3 finished review program 2, status: FAIL
+Programmer 2 finished review program 1, status: FAIL
+Programmer 1 finished review program 3, status: FAIL
+Programmer 2 is starting fixing his program after review
+Programmer 1 is starting fixing his program after review
+Programmer 3 is starting fixing his program after review
+Programmer 3 finished fixing his program after review
+Programmer 1 finished fixing his program after review
+Programmer 2 finished fixing his program after review
+Programmer 1 is starting review program 3
+Programmer 2 is starting review program 1
+Programmer 3 is starting review program 2
+Programmer 1 finished review program 3, status: SUCCESS 
+Programmer 3 finished review program 2, status: SUCCESS 
+Programmer 2 finished review program 1, status: SUCCESS 
+Programmer 3 is starting writing his program
+Programmer 2 is starting writing his program
+Programmer 1 is starting writing his program
+Programmer 3 finished writing his program
+Programmer 1 finished writing his program
+Programmer 2 finished writing his program
+Programmer 3 is starting review program 1
+Programmer 2 is starting review program 3
+Programmer 2 finished review program 3, status: FAIL
+Programmer 3 finished review program 1, status: FAIL
+Programmer 3 is starting review program 2
+Programmer 1 is starting fixing his program after review
+Programmer 1 finished fixing his program after review
+Programmer 3 finished review program 2, status: SUCCESS 
+Programmer 3 is starting review program 1
+Programmer 2 is starting writing his program
+Programmer 3 finished review program 1, status: SUCCESS 
+Programmer 3 is starting fixing his program after review
+Programmer 1 is starting writing his program
+Programmer 3 finished fixing his program after review
+Programmer 2 finished writing his program
+Programmer 2 is starting review program 3
+Programmer 3 is starting review program 2
+Programmer 1 finished writing his program
+Programmer 3 finished review program 2, status: FAIL
+Programmer 2 finished review program 3, status: FAIL
+Programmer 3 is starting review program 1
+Programmer 2 is starting fixing his program after review
+Programmer 2 finished fixing his program after review
+Programmer 3 finished review program 1, status: SUCCESS 
+Programmer 3 is starting review program 2
+Programmer 1 is starting writing his program
+Programmer 3 finished review program 2, status: SUCCESS 
+Programmer 3 is starting fixing his program after review
+Programmer 2 is starting writing his program
+Programmer 3 finished fixing his program after review
+Programmer 1 finished writing his program
+Programmer 3 is starting review program 1
+Programmer 2 finished writing his program
+Programmer 3 finished review program 1, status: SUCCESS 
+Programmer 2 is starting review program 3
+Programmer 1 is starting review program 2
+Programmer 1 finished review program 2, status: SUCCESS 
+Programmer 2 finished review program 3, status: SUCCESS 
+Programmer 1 is starting writing his program
+Programmer 2 is starting writing his program
+Programmer 3 is starting writing his program
+Programmer 1 finished writing his program
+Programmer 3 finished writing his program
+Programmer 2 finished writing his program
+Programmer 3 is starting review program 1
+Programmer 1 is starting review program 3

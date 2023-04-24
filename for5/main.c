@@ -1,0 +1,255 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <semaphore.h>
+#include <signal.h>
+#include <time.h>
+
+// значение семафора i - сколько задач стоят в очереди программиста i
+sem_t *sems;
+
+const char *shar_mem = "shared-memory";
+const char *sem_shar_mem = "sem-shared-memory";
+int shm_id;
+int sem_shm_id;
+
+int process_id;
+int write_code_time;
+int review_time;
+int fix_code_time;
+
+enum program_status
+{
+    IN_PROCESS,      // программист пишет программу
+    WAIT_FOR_REVIEW, // программа передана на проверку
+    REVIEW,          // программа проверяется
+    FAIL,            // программа написана неправильно
+    SUCCESS,         // программа написана правильно
+    FIX,             // программист исправляет свою работу
+};
+
+struct program {
+    int reviewer_id;
+    enum program_status status;
+};
+
+struct program *programs;
+
+void init_semaphores() {
+    sem_shm_id = shm_open(sem_shar_mem, O_CREAT | O_RDWR, 0666);
+    if (sem_shm_id < 0) {
+        perror("shm_open: can't open shared memory");
+        exit(-1);
+    }
+    
+    // allocate sharem memory size for semaphores if needed
+    struct stat shared_info;
+    fstat(sem_shm_id, &shared_info);
+    if (shared_info.st_size < 3 * sizeof(sem_t)){
+        if (ftruncate(sem_shm_id, 3 * sizeof(sem_t)) == -1) {
+            perror("ftruncate: can't allocate enought shared memory\n");
+            exit(-1);
+        }
+    }
+
+    sems = mmap(0, sizeof(sem_t) * 3, PROT_WRITE | PROT_READ, MAP_SHARED, sem_shm_id, 0);
+    if (sems == MAP_FAILED) {
+        perror("MAP FAILED for sems");
+        exit(-1);
+    }
+    for (int i = 0; i < 3; ++i) {
+        // инициализация неименнованого семафора в разделяемой памяти
+        if (sem_init(&sems[i], 1, 0) == -1) {
+            perror("sem_init error");
+            exit(-1);
+        }
+    }
+}
+
+void init_shared_memory() {
+    // open shared memory
+    shm_id = shm_open(shar_mem, O_CREAT | O_RDWR, 0666);
+    if (shm_id < 0) {
+        perror("shm_open: can't open shared memory");
+        exit(-1);
+    }
+    
+    // allocate sharem memory size to struct program[3] if needed
+    struct stat shared_info;
+    fstat(shm_id, &shared_info);
+    if (shared_info.st_size < 3 * sizeof(struct program)){
+        if (ftruncate(shm_id, 3 * sizeof(struct program)) == -1) {
+            perror("ftruncate: can't allocate enought shared memory\n");
+            exit(-1);
+        }
+    }
+
+    // связать shared memory с массивом programs
+    programs = mmap(0, 3 * sizeof(struct program), PROT_READ | PROT_WRITE, MAP_SHARED, shm_id, 0);
+    if (programs == MAP_FAILED) {
+        perror("MAP FAILED for programs");
+        exit(-1);
+    }
+}
+
+void close_resources() {
+    close(shm_id);
+    close(sem_shm_id);
+}
+
+void interrupt_handler(int sign) {
+    close_resources();
+
+    // родительский процесс все окончательно удаляет
+    if (process_id == 0) {
+        shm_unlink(shar_mem);
+        shm_unlink(sem_shar_mem);
+    }
+
+    exit(0);
+}
+
+int get_reviewer_id(int author_id) {
+    srand(time(0));
+    // выбрать случайного программиста, который будет проверять задачу
+    int reviewer_id;
+    do {
+        reviewer_id = rand() % 3;
+    } while (reviewer_id == author_id);
+
+    return reviewer_id;
+}
+
+void write_program(int program_id) {
+    programs[program_id].status = IN_PROCESS;
+    printf("Programmer %d is starting writing his program\n", program_id + 1);
+
+    sleep(write_code_time);
+
+    // назначить ревьюера
+    int reviewer_id = get_reviewer_id(program_id);
+    programs[program_id].reviewer_id = reviewer_id;
+    programs[program_id].status = WAIT_FOR_REVIEW;
+
+    printf("Programmer %d finished writing his program\n", program_id + 1);
+
+    sem_post(&sems[reviewer_id]); // известить программиста-ревьюера о том, что ему добавилась задача
+}
+
+void fix_program(int program_id) {
+    programs[program_id].status = FIX;
+    printf("Programmer %d is starting fixing his program after review\n", program_id + 1);
+    
+    sleep(fix_code_time);
+    programs[program_id].status = WAIT_FOR_REVIEW;
+
+    printf("Programmer %d finished fixing his program after review\n", program_id + 1);
+
+    sem_t *sem = &sems[programs[program_id].reviewer_id];
+    sem_post(sem); // известить программиста-ревьюера о том, что ему добавилась задача
+}
+
+void review_program(int process_id, int program_id) {
+    programs[program_id].status = REVIEW;
+    printf("Programmer %d is starting review program %d\n", process_id + 1, program_id + 1);
+
+    sleep(review_time);
+
+    // шанс успешного вердикта - 60%, провала - 40%
+    srand(time(0));
+    int result = rand() % 10;
+    if (result < 6) {
+        programs[program_id].status = SUCCESS;
+        printf("Programmer %d finished review program %d, status: SUCCESS \n", process_id + 1, program_id + 1);
+    } else {
+        programs[program_id].status = FAIL;
+        printf("Programmer %d finished review program %d, status: FAIL\n", process_id + 1, program_id + 1);
+    }
+
+    // известить программиста-автора о том, что ему добавилась задача (исправить программу или написать новую)
+    sem_t *sem = &sems[program_id];  
+    sem_post(sem);
+}
+
+void do_your_business(int process_id) {
+    // функция моделирует работу одного процесса-программиста
+    sem_t *sem = &sems[process_id];
+    write_program(process_id); // everybode starts with writing code
+
+    while (1) { // do tasks until program is stopped by user
+        // one iteration = one task
+        sem_wait(sem); // programmer sleeps (blocked) until he has a task to do
+
+        int task_taken = 0;
+        // сначала смотрит, есть ли у него задачи на ревью или на исправления кода
+        for (int i = 0; i < 3 && !task_taken; ++i) {
+            if (i == process_id) {
+                if (programs[i].status == FAIL) {
+                    fix_program(i);
+                    ++task_taken;
+                } 
+            } else {
+                // i != process_id
+                if (programs[i].reviewer_id == process_id && programs[i].status == WAIT_FOR_REVIEW) {
+                    review_program(process_id, i);
+                    ++task_taken;
+                }
+            }
+        }
+
+        // если нет других задач и программа прошла проверку - пишет новую программу
+        if (!task_taken && programs[process_id].status == SUCCESS) {
+            write_program(process_id);
+        }
+    }
+}
+
+int main(int argc, char* argv[]) {
+    (void)signal(SIGINT, interrupt_handler);
+
+    // инициализация начальных параметров - время выполнения процессами заданий
+    if (argc < 4) {
+        printf("Initialize all input parameters: write_code_time, review_time, fix_code_time!\n");
+        exit(-1);
+    }
+    write_code_time = atoi(argv[1]);
+    review_time = atoi(argv[2]);
+    fix_code_time = atoi(argv[3]);
+
+    // инизиализируем разделяемую память и семафоры, общие для всехп процессов
+    init_shared_memory();
+    init_semaphores();
+    // разделяем программу на 3 процесса-программиста
+    pid_t chpid1 = fork();
+    if (chpid1 < 0) {
+        printf("Can't fork process\n");
+        exit(-1);
+    }
+    
+    if (chpid1 > 0) {
+        // programmer №1 process
+        process_id = 0;
+    } else {
+        pid_t chpid2 = fork();
+        if (chpid2 < 0) {
+            printf("Can't fork process\n");
+            exit(-1);
+        }
+
+        if (chpid2 > 0) {
+            // programmer №2 process
+            process_id = 1;
+        } else {
+            // programmer №3 process
+            process_id = 2;
+        }
+    }
+
+    do_your_business(process_id); // запускаем "моделирование" процесса
+
+    return 0;
+}
